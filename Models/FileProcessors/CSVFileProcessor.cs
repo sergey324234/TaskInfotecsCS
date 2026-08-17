@@ -4,9 +4,8 @@ using TaskInfotecsCS.DbData;
 
 namespace TaskInfotecsCS.Models.FileProcessors;
 
-public class CSVFileProcessor : BaseFileProcessor
+public class CSVFileProcessor : BaseValuesTableFileProcessor
 {
-    public override string ContentType => "text/csv";
 
     public CSVFileProcessor(IFormFile file, AppDbContext context) : base(file, context) { }
 
@@ -14,14 +13,13 @@ public class CSVFileProcessor : BaseFileProcessor
     {
         var parts = line.Split(';');
 
-        // Используем DateTime.SpecifyKind или .ToUniversalTime()
         var parsedDate = DateTime.Parse(parts[0], CultureInfo.InvariantCulture);
         var utcDate = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
 
         return new Values
         {
             FileName = _file.FileName,
-            StartTime = utcDate, // <-- Передаем дату с Kind = Utc
+            StartTime = utcDate, 
             ExecutionTime = double.Parse(parts[1], CultureInfo.InvariantCulture),
             Value = double.Parse(parts[2], CultureInfo.InvariantCulture)
         };

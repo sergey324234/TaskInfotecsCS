@@ -1,6 +1,6 @@
 namespace TaskInfotecsCS.FilterDbProcessors;
 
-public class ResultFilterDto
+public class FilterResultTableParam
 {
     public string? FileName { get; set; }
     public DateTime? FirstOpTimeFrom { get; set; }
