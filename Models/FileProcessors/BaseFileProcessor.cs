@@ -19,7 +19,7 @@ public abstract class BaseFileProcessor
     }
 
 
-    public async Task WriteFileBD()
+    public async Task WriteFileBD(DbSet<Values> targetTable)
     {
         var dataList = new List<Values>();
 
@@ -39,31 +39,27 @@ public abstract class BaseFileProcessor
                 }
 
                 var item = ParseFileData(line);
-                if (item != null)
-                {
-                    dataList.Add(item);
-                }
+                dataList.Add(item);
+            
             }
         }
 
-        await _context.Values.AddRangeAsync(dataList);
+        await targetTable.AddRangeAsync(dataList);
         await _context.SaveChangesAsync();
     }
 
     //получение записей из таблицы values по имени файла
-    public async Task<List<Values>> GetValuesFromDb()
+    public async Task<List<Values>> GetValuesFromDb(DbSet<Values> targetTable)
     {
-        return await _context.Values.Where(v => v.FileName == _file.FileName).ToListAsync();
+        return await targetTable.AsNoTracking().Where(v => v.FileName == _file.FileName).ToListAsync();
     }
 
-    public async Task SaveResultBD(Result result)
+    public async Task SaveResultBD(Result result, DbSet<Result> targetTable)
     {
-        if (result == null) return;
+        var existingResults = targetTable.Where(r => r.FileName == _file.FileName);
+        targetTable.RemoveRange(existingResults);
 
-        var existingResults = _context.Results.Where(r => r.FileName == _file.FileName);
-        _context.Results.RemoveRange(existingResults);
-
-        await _context.Results.AddAsync(result);
+        await targetTable.AddAsync(result);
         await _context.SaveChangesAsync();
     }
 

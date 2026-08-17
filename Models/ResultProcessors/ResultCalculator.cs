@@ -7,8 +7,6 @@ public class ResultCalculator
 {
     public Result Calculate(List<Values> values, string fileName)
     {
-        if (values == null || values.Count == 0)
-            throw new ArgumentException("Список записей пуст.");
 
         var dates = values.Select(v => v.StartTime).ToList();
         var execTimes = values.Select(v => v.ExecutionTime).ToList();

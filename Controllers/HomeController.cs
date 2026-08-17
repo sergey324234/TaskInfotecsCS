@@ -3,6 +3,7 @@ using TaskInfotecsCS.Models.FileProcessors;
 using TaskInfotecsCS.DbData;
 using TaskInfotecsCS.DbTables;
 using TaskInfotecsCS.ResultProcessors;
+using TaskInfotecsCS.FilterDbProcessors;
 
 namespace App.Controllers
 {
@@ -19,31 +20,40 @@ namespace App.Controllers
             _context = context;
         }
 
-    [HttpPost("upload")]
-    public async Task<IActionResult> UploadCsv(IFormFile file)
-    {
-        BaseFileProcessor processor = new CSVFileProcessor(file, _context);
-
-        // 1. Записываем файл в БД
-        await processor.WriteFileBD();
-
-        // 2. Достаем записанные данные обратно из БД
-        List<Values> dbValues = await processor.GetValuesFromDb();
-
-        // 3. Считаем результат
-        var calculator = new ResultCalculator();
-        Result resultObject = calculator.Calculate(dbValues, file.FileName);
-
-        // 4. Записываем Result в БД
-        await processor.SaveResultBD(resultObject);
-
-        return Ok();
-    }
-
-        [HttpGet("results")] // Метод 2: GET на адрес api/home/results
-        public IActionResult GetResults()
+        /*[HttpPost("upload")]
+        public async Task<IActionResult> UploadCsv(IFormFile file)
         {
-            return Ok("Метод для получения результатов");
+            BaseFileProcessor processor = new CSVFileProcessor(file, _context);
+
+            // 1. Записываем файл в БД
+            await processor.WriteFileBD();
+
+            // 2. Достаем записанные данные обратно из БД
+            List<Values> dbValues = await processor.GetValuesFromDb();
+
+            // 3. Считаем результат
+            var calculator = new ResultCalculator();
+            Result resultObject = calculator.Calculate(dbValues, file.FileName);
+
+            // 4. Записываем Result в БД
+            await processor.SaveResultBD(resultObject);
+
+            return Ok();
+        }*/
+
+        [HttpGet]
+        public async Task<ActionResult<List<Result>>> GetFilteredResults([FromQuery] ResultFilterDto filter)
+        {
+            var filterBuilder = new FilterResultTableDb(_context);
+
+            var results = await filterBuilder
+                .FilterByFileName(filter.FileName)
+                .FilterByFirstOperationTime(filter.FirstOpTimeFrom, filter.FirstOpTimeTo)
+                .FilterByAvgValue(filter.MinAvgValue, filter.MaxAvgValue)
+                .FilterByAvgExecutionTime(filter.MinAvgExecTime, filter.MaxAvgExecTime)
+                .ExecuteAsync();
+
+            return Ok(results);
         }
 
         [HttpGet("latest-values")] // Метод 3: GET на адрес api/home/latest-values
