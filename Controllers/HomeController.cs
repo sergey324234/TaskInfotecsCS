@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskInfotecsCS.Models.FileProcessors;
+using TaskInfotecsCS.DbData;
+using TaskInfotecsCS.DbTables;
+using TaskInfotecsCS.ResultProcessors;
 
 namespace App.Controllers
 {
@@ -8,21 +11,34 @@ namespace App.Controllers
     [Route("api/[controller]")]
     public class HomeController : Controller
     {
-        private readonly FactoryFileProcessor _factory;
+        private readonly AppDbContext _context;
 
-        public HomeController(FactoryFileProcessor factory)
+
+        public HomeController(AppDbContext context)
         {
-            _factory = factory;
+            _context = context;
         }
 
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadCsv(IFormFile file)
+    {
+        BaseFileProcessor processor = new CSVFileProcessor(file, _context);
 
-        [HttpPost("upload-csv")] // Метод 1: POST на адрес api/home/upload-csv
-        public IActionResult UploadCsv(IFormFile file)
-        {
-            var tmp = _factory.GetProcessor(file);
-            
-            return Ok(tmp.SupportConctentTypeFile);
-        }
+        // 1. Записываем файл в БД
+        await processor.WriteFileBD();
+
+        // 2. Достаем записанные данные обратно из БД
+        List<Values> dbValues = await processor.GetValuesFromDb();
+
+        // 3. Считаем результат
+        var calculator = new ResultCalculator();
+        Result resultObject = calculator.Calculate(dbValues, file.FileName);
+
+        // 4. Записываем Result в БД
+        await processor.SaveResultBD(resultObject);
+
+        return Ok();
+    }
 
         [HttpGet("results")] // Метод 2: GET на адрес api/home/results
         public IActionResult GetResults()
