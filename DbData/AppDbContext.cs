@@ -7,11 +7,11 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<ValueItem> Values => Set<ValueItem>();
+    public DbSet<Values> Values => Set<Values>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<ValueItem>().HasIndex(v => v.FileName);
+        modelBuilder.Entity<Values>().HasIndex(v => v.FileName);
     }
 }

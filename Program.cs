@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using TaskInfotecsCS.DbData;
+using TaskInfotecsCS.Models.FileProcessors;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IFileProcessor, CSVFileProcessor>();
+builder.Services.AddScoped<FactoryFileProcessor>();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
